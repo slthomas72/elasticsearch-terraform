@@ -553,7 +553,245 @@ resource "azurerm_monitor_metric_alert" "example" {
 ```
 <br>
 These scenarios and corresponding Terraform configurations should give you a solid foundation.
+<br>
+<br>
 
+# Interview Scenarios and Answers for Terraform and Elasticsearch
 
+## Scenario 1: Increasing the Number of Elasticsearch Nodes
+
+**Question:** You currently have a single Elasticsearch node set up using Terraform. Due to increased load, you need to add more nodes to your cluster. How would you modify your Terraform configuration to achieve this?
+
+**Answer:**
+You need to modify your Terraform configuration to add additional VM instances and configure them to join the Elasticsearch cluster. Here's a basic example of how you can scale from one to three nodes:
+
+### Current Terraform Configuration (Single Node):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 1
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es.id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+```
+
+### Modified Configuration (Multiple Nodes):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 3
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 3
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+### Rebalance the Cluster:
+Once the new nodes are added, you can use the Elasticsearch API to rebalance the shards across the new nodes:
+```bash
+curl -X POST "localhost:9200/_cluster/reroute?retry_failed"
+```
+
+## Scenario 2: Removing Nodes from the Cluster
+
+**Question:** You need to decommission some of your Elasticsearch nodes to reduce costs. How would you modify your Terraform configuration to remove these nodes, and what steps would you take to ensure the shards are safely reallocated?
+
+**Answer:**
+
+### Current Terraform Configuration (Multiple Nodes):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 5
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 5
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+### Modified Configuration (Reduced Nodes):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 3
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 3
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+### Reallocate Shards:
+Before applying the changes, reallocate shards away from the nodes you plan to remove:
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "move": {
+        "index": "index_name",
+        "shard": 0,
+        "from_node": "node4",
+        "to_node": "node1"
+      }
+    },
+    {
+      "move": {
+        "index": "index_name",
+        "shard": 1,
+        "from_node": "node4",
+        "to_node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+### Apply Terraform Changes:
+```bash
+terraform apply
+```
+
+## Scenario 3: Calculating Shards Based on Node Memory
+
+**Question:** You need to calculate the optimal number of shards for your Elasticsearch cluster based on the memory allocated to each node. Each node has 32GB of RAM, and you want to allocate 50% of the memory to the heap. How would you determine the number of shards?
+
+**Answer:**
+
+### Determine Heap Size:
+- Total RAM per node: 32GB
+- Heap size per node: 50% of 32GB = 16GB
+
+### Shard Size Recommendations:
+- Recommended shard size: 10-40GB
+
+### Calculate Number of Shards:
+- Assuming an average shard size of 30GB, calculate the total number of shards the cluster can handle based on the available heap size.
+
+### Example Calculation:
+- Number of nodes: 5
+- Total heap size: 5 nodes * 16GB = 80GB
+- Average shard size: 30GB
+- Total shards: 80GB / 30GB ≈ 2.67 shards per node
+
+### Final Number of Shards:
+To simplify, allocate 2 shards per node initially, adjusting based on actual data size and performance:
+```hcl
+resource "elasticsearch_index" "example" {
+  name = "example-index"
+
+  settings = jsonencode({
+    number_of_shards   = 10
+    number_of_replicas = 1
+  })
+}
+```
+
+## Scenario 4: Monitoring and Alerting
+
+**Question:** How would you set up monitoring and alerting for your Elasticsearch cluster using Terraform and Azure Monitor?
+
+**Answer:**
+
+**Set Up Log Analytics Workspace:**
+```hcl
+resource "azurerm_log_analytics_workspace" "example" {
+  name                = "loganalyticsworkspace"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+```
+
+**Enable Diagnostic Settings for Elasticsearch VM:**
+```hcl
+resource "azurerm_monitor_diagnostic_setting" "example" {
+  name               = "example-diagnostics"
+  target_resource_id = azurerm_virtual_machine.es[0].id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
+
+  logs {
+    category = "AllLogs"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+
+  metrics {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+}
+```
+
+**Create Alerts Based on Logs and Metrics:**
+```hcl
+resource "azurerm_monitor_metric_alert" "example" {
+  name                = "example-metric-alert"
+  resource_group_name = azurerm_resource_group.example.name
+  scopes              = [azurerm_virtual_machine.es[0].id]
+  description         = "Alerts when CPU usage is high"
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+  action {
+    action_group_id = azurerm_monitor_action_group.example.id
+  }
+}
+```
+
+<br>
+These scenarios and corresponding Terraform configurations should give you a solid foundation.
 
 
