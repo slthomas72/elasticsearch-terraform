@@ -556,7 +556,7 @@ These scenarios and corresponding Terraform configurations should give you a sol
 <br>
 <br>
 
-# Interview Scenarios and Answers for Terraform and Elasticsearch
+# Scenarios and Answers for Terraform and Elasticsearch
 
 ## Scenario 1: Increasing the Number of Elasticsearch Nodes
 
