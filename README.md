@@ -377,6 +377,182 @@ Use Kusto Query Language (KQL) in Azure Log Analytics to query logs:
 ```kql
 Search "Elasticsearch" | where ResourceId == "<Your VM Resource ID>"
 ```
+<br>
+<br>
+<br>
+
+# Scenarios and Answers for Terraform and Elasticsearch
+
+## Scenario 1: Increasing the Number of Elasticsearch Nodes
+
+**Question:** You currently have a single Elasticsearch node set up using Terraform. Due to increased load, you need to add more nodes to your cluster. How would you modify your Terraform configuration to achieve this?
+
+**Answer:**
+You need to modify your Terraform configuration to add additional VM instances and configure them to join the Elasticsearch cluster. Here's a basic example of how you can scale from one to three nodes:
+
+### Current Terraform Configuration (Single Node):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 1
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es.id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+```
+
+### Modified Configuration (Multiple Nodes):
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 3
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 3
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+## Scenario 2: Handling a Failed Shard
+
+**Question:** One of your Elasticsearch shards is failing, and you need to reallocate it to a different node. How would you approach this problem using both Elasticsearch API and Terraform?
+
+**Answer:**
+
+### Step 1: Using Elasticsearch API to Reallocate the Shard:
+
+**Identify the Failed Shard:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+**Reallocate the Shard:**
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "move": {
+        "index": "index_name",
+        "shard": 0,
+        "from_node": "node1",
+        "to_node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+### Step 2: Using Terraform to Prevent Future Failures:
+
+Modify your Terraform configuration to add more redundancy and improve fault tolerance. This might involve adding more nodes, increasing the number of replicas, or improving node specifications.
+
+**Increase the Number of Replicas:**
+```hcl
+resource "elasticsearch_index" "example" {
+  name = "example-index"
+
+  settings = jsonencode({
+    number_of_replicas = 2
+  })
+}
+```
+
+**Ensure High Availability by Distributing Nodes Across Availability Zones:**
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 3
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+  availability_zone    = count.index + 1
+
+  # Other VM configuration...
+}
+```
+
+## Scenario 3: Monitoring and Alerting
+
+**Question:** How would you set up monitoring and alerting for your Elasticsearch cluster using Terraform and Azure Monitor?
+
+**Answer:**
+
+**Set Up Log Analytics Workspace:**
+```hcl
+resource "azurerm_log_analytics_workspace" "example" {
+  name                = "loganalyticsworkspace"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+```
+
+**Enable Diagnostic Settings for Elasticsearch VM:**
+```hcl
+resource "azurerm_monitor_diagnostic_setting" "example" {
+  name               = "example-diagnostics"
+  target_resource_id = azurerm_virtual_machine.es[0].id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
+
+  logs {
+    category = "AllLogs"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+
+  metrics {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+}
+```
+
+**Create Alerts Based on Logs and Metrics:**
+```hcl
+resource "azurerm_monitor_metric_alert" "example" {
+  name                = "example-metric-alert"
+  resource_group_name = azurerm_resource_group.example.name
+  scopes              = [azurerm_virtual_machine.es[0].id]
+  description         = "Alerts when CPU usage is high"
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+  }
+  action {
+    action_group_id = azurerm_monitor_action_group.example.id
+  }
+}
+```
+<br>
+These scenarios and corresponding Terraform configurations should give you a solid foundation.
 
 
 
