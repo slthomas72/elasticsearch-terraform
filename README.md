@@ -51,8 +51,8 @@ Before starting with the setup of the Elasticsearch cluster on Azure, ensure you
 
 3. **Terraform**: Install Terraform on your Mac.
     ```bash
-    brew tap hashicorp/tap
-    brew install hashicorp/tap/terraform
+    brew tap hashicorptap
+    brew install hashicorptapterraform
     ```
 
 4. **Docker**: Install Docker Desktop for Mac.
@@ -167,18 +167,18 @@ If your virtual machine does not have a public IP address assigned, you will nee
  5. **Install Docker Compose:**
 
     ```bash
-    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo curl -L "https:github.comdockercomposereleasesdownload1.29.2docker-compose-$(uname -s)-$(uname -m)" -o usrlocalbindocker-compose
     ```
 
     ```bash
-    sudo chmod +x /usr/local/bin/docker-compose
+    sudo chmod +x usrlocalbindocker-compose
     docker-compose --version
     ```
     This command downloads Docker Compose and makes it executable. The version command should confirm the installation.
 
  6. **Run Docker Compose File:**
 
-    Ensure you are in the correct directory (e.g., /home/azureuser or wherever you want to store your configuration files).  Create the docker-compose.yml file on the VM which will set up the Elastic Search instance.
+    Ensure you are in the correct directory (e.g., homeazureuser or wherever you want to store your configuration files).  Create the docker-compose.yml file on the VM which will set up the Elastic Search instance.
 
     ```bash
     sudo docker-compose.yml
@@ -202,7 +202,7 @@ If your virtual machine does not have a public IP address assigned, you will nee
     From the VM, you can test if Elasticsearch is running:
 
     ```bash
-    curl -X GET "localhost:9200/"
+    curl -X GET "localhost:9200"
     ```
     By following these steps, you should be able to successfully set up and run Elasticsearch on your Azure VM using Docker and Docker Compose.
 
@@ -252,7 +252,7 @@ Use Python and Faker to generate fake data.
     You can verify that the data has been populated by querying Elasticsearch:
 
     ```bash
-    curl -X GET "localhost:9200/people/_search?pretty"
+    curl -X GET "localhost:9200people_search?pretty"
     ```
 
     
@@ -322,12 +322,12 @@ terraform apply
 
 ### Check current shard allocation:
 ```bash
-curl -X GET "localhost:9200/_cat/shards?v"
+curl -X GET "localhost:9200_catshards?v"
 ```
 
 ### Reallocate shards (example to move a shard):
 ```bash
-curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+curl -X POST "localhost:9200_clusterreroute" -H 'Content-Type: applicationjson' -d'
 {
   "commands": [
     {
@@ -349,17 +349,17 @@ This usually requires reindexing. You can use the `_reindex` API to copy data to
 
 ### Check cluster health:
 ```bash
-curl -X GET "localhost:9200/_cluster/health?pretty"
+curl -X GET "localhost:9200_clusterhealth?pretty"
 ```
 Status indicators:
 - `green`: All primary and replica shards are active.
-- `yellow`: All primary shards are active, but some/all replica shards are not allocated.
-- `red`: Some/all primary shards are not active.
+- `yellow`: All primary shards are active, but someall replica shards are not allocated.
+- `red`: Someall primary shards are not active.
 
 ## 5. Monitoring Elasticsearch Performance and Logs in Azure
 
 ### Azure Monitor:
-Use Azure Monitor to track the performance metrics of your Elasticsearch VM. Navigate to the Azure portal, go to your VM resource, and select "Metrics" to visualize CPU, memory, disk I/O, and network metrics.
+Use Azure Monitor to track the performance metrics of your Elasticsearch VM. Navigate to the Azure portal, go to your VM resource, and select "Metrics" to visualize CPU, memory, disk IO, and network metrics.
 
 ### Azure Log Analytics:
 Configure Azure Log Analytics to collect logs from your VM. Go to the Log Analytics workspace in the Azure portal, and set up log collection from your VM. Use queries in the workspace to analyze the logs.
@@ -437,12 +437,12 @@ resource "azurerm_network_interface" "es" {
 
 **Identify the Failed Shard:**
 ```bash
-curl -X GET "localhost:9200/_cat/shards?v"
+curl -X GET "localhost:9200_catshards?v"
 ```
 
 **Reallocate the Shard:**
 ```bash
-curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+curl -X POST "localhost:9200_clusterreroute" -H 'Content-Type: applicationjson' -d'
 {
   "commands": [
     {
@@ -540,7 +540,7 @@ resource "azurerm_monitor_metric_alert" "example" {
   scopes              = [azurerm_virtual_machine.es[0].id]
   description         = "Alerts when CPU usage is high"
   criteria {
-    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_namespace = "Microsoft.ComputevirtualMachines"
     metric_name      = "Percentage CPU"
     aggregation      = "Average"
     operator         = "GreaterThan"
@@ -605,7 +605,7 @@ resource "azurerm_network_interface" "es" {
 ### Rebalance the Cluster:
 Once the new nodes are added, you can use the Elasticsearch API to rebalance the shards across the new nodes:
 ```bash
-curl -X POST "localhost:9200/_cluster/reroute?retry_failed"
+curl -X POST "localhost:9200_clusterreroute?retry_failed"
 ```
 
 ## Scenario 2: Removing Nodes from the Cluster
@@ -663,7 +663,7 @@ resource "azurerm_network_interface" "es" {
 ### Reallocate Shards:
 Before applying the changes, reallocate shards away from the nodes you plan to remove:
 ```bash
-curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+curl -X POST "localhost:9200_clusterreroute" -H 'Content-Type: applicationjson' -d'
 {
   "commands": [
     {
@@ -711,7 +711,7 @@ terraform apply
 - Number of nodes: 5
 - Total heap size: 5 nodes * 16GB = 80GB
 - Average shard size: 30GB
-- Total shards: 80GB / 30GB ≈ 2.67 shards per node
+- Total shards: 80GB  30GB ≈ 2.67 shards per node
 
 ### Final Number of Shards:
 To simplify, allocate 2 shards per node initially, adjusting based on actual data size and performance:
@@ -779,7 +779,7 @@ resource "azurerm_monitor_metric_alert" "example" {
   scopes              = [azurerm_virtual_machine.es[0].id]
   description         = "Alerts when CPU usage is high"
   criteria {
-    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_namespace = "Microsoft.ComputevirtualMachines"
     metric_name      = "Percentage CPU"
     aggregation      = "Average"
     operator         = "GreaterThan"
@@ -795,3 +795,661 @@ resource "azurerm_monitor_metric_alert" "example" {
 These scenarios and corresponding Terraform configurations should give you a solid foundation.
 
 
+# Advanced Scenarios and Answers for Terraform and Elasticsearch
+
+## Scenario 1: Calculating Additional Nodes for Increased Data Volume
+
+**Question:** Your Elasticsearch cluster is currently handling 2TB of data with 10 nodes. Each node has 32GB of RAM and 16GB of heap allocated. Your data volume is expected to double to 4TB in the next month. How many additional nodes will you need to handle this increased data volume while maintaining the same shard size?
+
+**Answer:**
+
+1. **Current Setup:**
+   - Data volume: 2TB
+   - Number of nodes: 10
+   - RAM per node: 32GB
+   - Heap size per node: 16GB
+   - Current shard size: Assume 200GB per node (2TB  10 nodes)
+
+2. **Expected Data Volume:**
+   - New data volume: 4TB
+   - Desired shard size: 200GB per node
+
+3. **Calculate Number of Nodes:**
+   - Total data volume: 4TB (4000GB)
+   - Shard size per node: 200GB
+   - Number of nodes required: 4000GB  200GB per node = 20 nodes
+
+4. **Additional Nodes Needed:**
+   - Current nodes: 10
+   - Additional nodes: 20 - 10 = 10 nodes
+
+**Terraform Configuration (Scaling to 20 Nodes):**
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 20
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 20
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+## Scenario 2: Handling Uneven Shard Distribution
+
+**Question:** You notice that some nodes in your Elasticsearch cluster are underutilized while others are overloaded. How would you rebalance the shards to achieve a more even distribution?
+
+**Answer:**
+
+1. **Check Current Shard Distribution:**
+```bash
+curl -X GET "localhost:9200_catshards?v"
+```
+
+2. **Rebalance Shards Using Elasticsearch API:**
+```bash
+curl -X POST "localhost:9200_clusterreroute" -H 'Content-Type: applicationjson' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "underutilized_node"
+      }
+    },
+    {
+      "cancel": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "overloaded_node",
+        "allow_primary": true
+      }
+    }
+  ]
+}'
+```
+
+3. **Monitor the Cluster:**
+```bash
+curl -X GET "localhost:9200_clusterhealth?pretty"
+```
+
+## Scenario 3: Advanced Monitoring and Auto-Scaling
+
+**Question:** How would you set up auto-scaling for your Elasticsearch cluster using Terraform and Azure Monitor, ensuring that the cluster scales up or down based on CPU usage?
+
+**Answer:**
+
+1. **Set Up Log Analytics Workspace:**
+```hcl
+resource "azurerm_log_analytics_workspace" "example" {
+  name                = "loganalyticsworkspace"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+```
+
+2. **Enable Diagnostic Settings for Elasticsearch VM:**
+```hcl
+resource "azurerm_monitor_diagnostic_setting" "example" {
+  name               = "example-diagnostics"
+  target_resource_id = azurerm_virtual_machine.es[0].id
+
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.example.id
+
+  logs {
+    category = "AllLogs"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+
+  metrics {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = true
+      days    = 7
+    }
+  }
+}
+```
+
+3. **Set Up Auto-Scaling Rules:**
+```hcl
+resource "azurerm_monitor_autoscale_setting" "example" {
+  name                = "example-autoscale"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
+  target_resource_id  = azurerm_virtual_machine_scale_set.example.id
+
+  profile {
+    name = "defaultProfile"
+    capacity {
+      minimum = 1
+      maximum = 10
+      default = 3
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "Percentage CPU"
+        metric_resource_id = azurerm_virtual_machine_scale_set.example.id
+        time_grain         = "PT1M"
+        statistic          = "Average"
+        time_window        = "PT5M"
+        time_aggregation   = "Average"
+        operator           = "GreaterThan"
+        threshold          = 75
+      }
+
+      scale_action {
+        direction = "Increase"
+        type      = "ChangeCount"
+        value     = 1
+        cooldown  = "PT5M"
+      }
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "Percentage CPU"
+        metric_resource_id = azurerm_virtual_machine_scale_set.example.id
+        time_grain         = "PT1M"
+        statistic          = "Average"
+        time_window        = "PT5M"
+        time_aggregation   = "Average"
+        operator           = "LessThan"
+        threshold          = 25
+      }
+
+      scale_action {
+        direction = "Decrease"
+        type      = "ChangeCount"
+        value     = 1
+        cooldown  = "PT5M"
+      }
+    }
+  }
+}
+```
+
+
+
+## Scenario 4: Adjusting Shard Allocation for Indexing and Query Performance
+
+**Question:** Your cluster is experiencing slow query performance due to the high load on certain indices. How would you adjust shard allocation to improve query performance?
+
+**Answer:**
+
+1. **Analyze Current Shard Allocation:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+2. **Adjust Index Settings:**
+Increase the number of replicas for better query performance:
+```bash
+curl -X PUT "localhost:9200/index_name/_settings" -H 'Content-Type: application/json' -d'
+{
+  "index": {
+    "number_of_replicas": 2
+  }
+}'
+```
+
+3. **Use the Reroute API to Rebalance Shards:**
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "node1"
+      }
+    },
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 1,
+        "node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+## Scenario 5: Handling Node Failure and Recovery
+
+**Question:** One of your Elasticsearch nodes has failed, causing some primary shards to become unavailable. How would you handle this situation to recover the failed shards and ensure high availability?
+
+**Answer:**
+
+1. **Identify the Failed Shards:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+2. **Promote Replica Shards to Primary:**
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+3. **Replace the Failed Node:**
+   - Remove the failed node from the cluster configuration.
+   - Add a new node to replace the failed one using Terraform.
+
+**Terraform Configuration (Replacing a Node):**
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 10
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 10
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+name                = "es-nic-${count.index}"
+<br>
+location            = azurerm_resource_group.main.location
+<br>
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+
+
+## Scenario 6: Checking Cluster Health and Status with cURL
+
+**Question:** How do you check the health and status of your Elasticsearch cluster using cURL commands?
+
+**Answer:**
+
+1. **Check Cluster Health:**
+```bash
+curl -X GET "localhost:9200/_cluster/health?pretty"
+```
+
+2. **Check Cluster State:**
+```bash
+curl -X GET "localhost:9200/_cluster/state?pretty"
+```
+
+3. **Check Node Information:**
+```bash
+curl -X GET "localhost:9200/_nodes?pretty"
+```
+
+4. **Check Shard Allocation:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+5. **Check Index Health:**
+```bash
+curl -X GET "localhost:9200/_cat/indices?v"
+```
+
+6. **Check Pending Tasks:**
+```bash
+curl -X GET "localhost:9200/_cat/pending_tasks?v"
+```
+
+## Common cURL Commands for Elasticsearch
+
+```bash
+# Check cluster health
+curl -X GET "localhost:9200/_cluster/health?pretty"
+
+# Check cluster state
+curl -X GET "localhost:9200/_cluster/state?pretty"
+
+# Check node information
+curl -X GET "localhost:9200/_nodes?pretty"
+
+# Check shard allocation
+curl -X GET "localhost:9200/_cat/shards?v"
+
+# Check index health
+curl -X GET "localhost:9200/_cat/indices?v"
+
+# Check pending tasks
+curl -X GET "localhost:9200/_cat/pending_tasks?v"
+
+# Rebalance shards
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "target_node"
+      }
+    },
+    {
+      "cancel": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "source_node",
+        "allow_primary": true
+      }
+    }
+  ]
+}'
+```
+
+## Commonly Used Fields and Terms
+
+- **from_node**: The source node in shard allocation and reallocation.
+- **to_node**: The target node in shard allocation and reallocation.
+- **count.index**: Used in Terraform to index resources.
+- **_cat API**: Elasticsearch API endpoint for quick access to cluster information.
+- **cache**: Used to cache shards for faster access.
+- **replica**: Copies of the primary shard used for fault tolerance and increased search throughput.
+- **primary**: The original shard responsible for indexing and updating documents.
+
+### Common Fields in Terraform
+- **name**: The name of the resource.
+- **location**: The geographic location of the resource.
+- **resource_group_name**: The name of the resource group.
+- **network_interface_ids**: The IDs of the network interfaces associated with the VM.
+- **vm_size**: The size of the virtual machine.
+
+### Common Terms in Elasticsearch
+- **shard**: A basic unit of storage in Elasticsearch. Each index is divided into shards.
+- **replica shard**: A copy of a primary shard. Provides redundancy and improves search performance.
+- **primary shard**: The original shard that handles indexing operations.
+- **allocation**: The process of assigning shards to nodes.
+- **rebalancing**: The process of redistributing shards across the nodes in a cluster to ensure even distribution.
+
+### Useful cURL Commands
+```bash
+# Check Elasticsearch version
+curl -X GET "localhost:9200"
+
+# Check all indices
+curl -X GET "localhost:9200/_cat/indices?v"
+
+# Check all shards
+curl -X GET "localhost:9200/_cat/shards?v"
+
+# Check cluster settings
+curl -X GET "localhost:9200/_cluster/settings?pretty"
+
+# Update cluster settings
+curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "cluster.routing.allocation.enable": "all"
+  }
+}'
+```
+
+
+## Scenario 4: Adjusting Shard Allocation for Indexing and Query Performance
+
+**Question:** Your cluster is experiencing slow query performance due to the high load on certain indices. How would you adjust shard allocation to improve query performance?
+
+**Answer:**
+
+1. **Analyze Current Shard Allocation:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+2. **Adjust Index Settings:**
+Increase the number of replicas for better query performance:
+```bash
+curl -X PUT "localhost:9200/index_name/_settings" -H 'Content-Type: application/json' -d'
+{
+  "index": {
+    "number_of_replicas": 2
+  }
+}'
+```
+
+3. **Use the Reroute API to Rebalance Shards:**
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "node1"
+      }
+    },
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 1,
+        "node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+## Scenario 5: Handling Node Failure and Recovery
+
+**Question:** One of your Elasticsearch nodes has failed, causing some primary shards to become unavailable. How would you handle this situation to recover the failed shards and ensure high availability?
+
+**Answer:**
+
+1. **Identify the Failed Shards:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+2. **Promote Replica Shards to Primary:**
+```bash
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "node2"
+      }
+    }
+  ]
+}'
+```
+
+3. **Replace the Failed Node:**
+   - Remove the failed node from the cluster configuration.
+   - Add a new node to replace the failed one using Terraform.
+
+**Terraform Configuration (Replacing a Node):**
+```hcl
+resource "azurerm_virtual_machine" "es" {
+  count                = 10
+  name                 = "es-${count.index}"
+  location             = azurerm_resource_group.main.location
+  resource_group_name  = azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.es[count.index].id]
+  vm_size              = "Standard_DS2_v2"
+
+  # Other VM configuration...
+}
+
+resource "azurerm_network_interface" "es" {
+  count               = 10
+  name                = "es-nic-${count.index}"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+
+  # Other NIC configuration...
+}
+```
+
+## Scenario 6: Checking Cluster Health and Status with cURL
+
+**Question:** How do you check the health and status of your Elasticsearch cluster using cURL commands?
+
+**Answer:**
+
+1. **Check Cluster Health:**
+```bash
+curl -X GET "localhost:9200/_cluster/health?pretty"
+```
+
+2. **Check Cluster State:**
+```bash
+curl -X GET "localhost:9200/_cluster/state?pretty"
+```
+
+3. **Check Node Information:**
+```bash
+curl -X GET "localhost:9200/_nodes?pretty"
+```
+
+4. **Check Shard Allocation:**
+```bash
+curl -X GET "localhost:9200/_cat/shards?v"
+```
+
+5. **Check Index Health:**
+```bash
+curl -X GET "localhost:9200/_cat/indices?v"
+```
+
+6. **Check Pending Tasks:**
+```bash
+curl -X GET "localhost:9200/_cat/pending_tasks?v"
+```
+
+## Common cURL Commands for Elasticsearch
+
+```bash
+# Check cluster health
+curl -X GET "localhost:9200/_cluster/health?pretty"
+
+# Check cluster state
+curl -X GET "localhost:9200/_cluster/state?pretty"
+
+# Check node information
+curl -X GET "localhost:9200/_nodes?pretty"
+
+# Check shard allocation
+curl -X GET "localhost:9200/_cat/shards?v"
+
+# Check index health
+curl -X GET "localhost:9200/_cat/indices?v"
+
+# Check pending tasks
+curl -X GET "localhost:9200/_cat/pending_tasks?v"
+
+# Rebalance shards
+curl -X POST "localhost:9200/_cluster/reroute" -H 'Content-Type: application/json' -d'
+{
+  "commands": [
+    {
+      "allocate_replica": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "target_node"
+      }
+    },
+    {
+      "cancel": {
+        "index": "index_name",
+        "shard": 0,
+        "node": "source_node",
+        "allow_primary": true
+      }
+    }
+  ]
+}'
+```
+
+## Commonly Used Fields and Terms
+
+- **from_node**: The source node in shard allocation and reallocation.
+- **to_node**: The target node in shard allocation and reallocation.
+- **count.index**: Used in Terraform to index resources.
+- **_cat API**: Elasticsearch API endpoint for quick access to cluster information.
+- **cache**: Used to cache shards for faster access.
+- **replica**: Copies of the primary shard used for fault tolerance and increased search throughput.
+- **primary**: The original shard responsible for indexing and updating documents.
+
+### Common Fields in Terraform
+- **name**: The name of the resource.
+- **location**: The geographic location of the resource.
+- **resource_group_name**: The name of the resource group.
+- **network_interface_ids**: The IDs of the network interfaces associated with the VM.
+- **vm_size**: The size of the virtual machine.
+
+### Common Terms in Elasticsearch
+- **shard**: A basic unit of storage in Elasticsearch. Each index is divided into shards.
+- **replica shard**: A copy of a primary shard. Provides redundancy and improves search performance.
+- **primary shard**: The original shard that handles indexing operations.
+- **allocation**: The process of assigning shards to nodes.
+- **rebalancing**: The process of redistributing shards across the nodes in a cluster to ensure even distribution.
+
+### Useful cURL Commands
+```bash
+# Check Elasticsearch version
+curl -X GET "localhost:9200"
+
+# Check all indices
+curl -X GET "localhost:9200/_cat/indices?v"
+
+# Check all shards
+curl -X GET "localhost:9200/_cat/shards?v"
+
+# Check cluster settings
+curl -X GET "localhost:9200/_cluster/settings?pretty"
+
+# Update cluster settings
+curl -X PUT "localhost:9200/_cluster/settings" -H 'Content-Type: application/json' -d'
+{
+  "persistent": {
+    "cluster.routing.allocation.enable": "all"
+  }
+}'
+```
